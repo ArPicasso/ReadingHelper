@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Дневник чтения</title>
+  <meta name="description" content="Дашборд привычки чтения: темп, недельная цель, книги и прогресс.">
+  <link rel="stylesheet" href="styles.css">
+  <!-- The official SDK: it supplies the theme, the viewport and Serverless.call. -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <main id="app" hidden>
+    <header>
+      <h1 id="greeting">Дневник чтения</h1>
+      <p class="sub" id="subtitle"></p>
+    </header>
+
+    <section class="tiles" aria-label="Сводка">
+      <div class="tile">
+        <div class="tile-label">Сегодня</div>
+        <div class="tile-value num" id="today-value">—</div>
+        <div class="tile-note" id="today-note"></div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">Темп</div>
+        <div class="tile-value num" id="pace-value">—</div>
+        <div class="tile-note" id="pace-note"></div>
+      </div>
+      <div class="tile">
+        <div class="tile-label">Год</div>
+        <div class="tile-value num" id="year-value">—</div>
+        <div class="tile-note" id="year-note"></div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="week-heading">
+      <div class="row">
+        <h2 id="week-heading">Неделя</h2>
+        <span class="sub num" id="week-range"></span>
+      </div>
+      <div class="row">
+        <strong class="num" id="week-figure">—</strong>
+        <span class="sub" id="week-left"></span>
+      </div>
+      <div class="meter"><span id="week-meter" style="width:0"></span></div>
+      <div class="weekdays" id="week-days"></div>
+    </section>
+
+    <section class="card" id="book-card" aria-labelledby="book-heading" hidden>
+      <h2 id="book-heading">Читаю сейчас</h2>
+      <div class="book-title" id="book-title"></div>
+      <div class="book-meta" id="book-meta"></div>
+      <div class="meter"><span id="book-meter" style="width:0"></span></div>
+      <p class="sub" id="book-eta"></p>
+
+      <div class="quick">
+        <button type="button" data-log-pages="10">+10</button>
+        <button type="button" data-log-pages="20">+20</button>
+        <button type="button" data-log-pages="30">+30</button>
+      </div>
+      <div class="field">
+        <label for="page-input">Я на странице</label>
+        <input id="page-input" type="number" min="0" inputmode="numeric" placeholder="147">
+        <button type="button" class="primary" id="page-save">Записать</button>
+      </div>
+      <div class="field">
+        <label for="minutes-input">Минут чтения</label>
+        <input id="minutes-input" type="number" min="0" max="1440" inputmode="numeric" placeholder="25">
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="days-heading">
+      <h2 id="days-heading">Страницы по дням — 4 недели</h2>
+      <div class="chart" id="days-chart" data-height="150"
+           data-aria="Страницы, прочитанные в каждый из последних 28 дней"></div>
+      <details>
+        <summary>Таблица</summary>
+        <div id="days-table"></div>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="weeks-heading">
+      <h2 id="weeks-heading">Недели — 8 последних</h2>
+      <div class="chart" id="weeks-chart" data-height="150"
+           data-aria="Страницы по неделям за последние восемь недель"></div>
+      <details>
+        <summary>Таблица</summary>
+        <div id="weeks-table"></div>
+      </details>
+    </section>
+
+    <section class="card" id="contract-card" aria-labelledby="contract-heading" hidden>
+      <h2 id="contract-heading">Контракт</h2>
+      <div class="row">
+        <strong class="num" id="contract-figure"></strong>
+        <span class="sub" id="contract-left"></span>
+      </div>
+      <div class="meter"><span id="contract-meter" style="width:0"></span></div>
+      <p class="sub" id="contract-terms"></p>
+    </section>
+
+    <section class="card" aria-labelledby="year-heading">
+      <h2 id="year-heading">Цель на год</h2>
+      <div class="row">
+        <strong class="num" id="year-figure"></strong>
+        <span class="sub" id="year-left"></span>
+      </div>
+      <div class="meter"><span id="year-meter" style="width:0"></span></div>
+      <div class="chips" id="year-chips"></div>
+    </section>
+
+    <section class="card" aria-labelledby="library-heading">
+      <h2 id="library-heading">Полка</h2>
+      <div id="library"></div>
+    </section>
+
+    <section class="card" id="quotes-card" aria-labelledby="quotes-heading" hidden>
+      <h2 id="quotes-heading">Цитаты</h2>
+      <div id="quotes"></div>
+    </section>
+
+    <section class="card" aria-labelledby="settings-heading">
+      <h2 id="settings-heading">Настройки</h2>
+      <div class="field">
+        <label for="goal-input">Страниц в неделю</label>
+        <input id="goal-input" type="number" min="1" max="10000" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="min-input">Минимум в день</label>
+        <input id="min-input" type="number" min="1" max="1000" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="books-input">Книг за год</label>
+        <input id="books-input" type="number" min="1" max="365" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="remind-input">Напоминание</label>
+        <input id="remind-input" type="time">
+      </div>
+      <div class="quick">
+        <button type="button" class="primary" id="settings-save">Сохранить</button>
+        <button type="button" class="ghost" id="remind-off">Выключить напоминания</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="banner" id="loading">Загружаю…</div>
+  <div class="banner" id="error" hidden></div>
+  <div class="toast" id="toast" hidden></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+/* Reading Helper Mini App.
+ *
+ * Colours: surfaces and body ink follow the user's Telegram theme when the app
+ * runs inside Telegram; everything else comes from a validated palette (one
+ * data hue per chart, stepped separately for light and dark, both modes checked
+ * against their own surface). Chrome greys are mixed from the ink so they stay
+ * correct on whatever surface Telegram hands us. */
+
+:root {
+  color-scheme: light;
+
+  --plane: var(--tg-theme-bg-color, #f9f9f7);
+  --surface: var(--tg-theme-secondary-bg-color, #fcfcfb);
+  --ink-1: var(--tg-theme-text-color, #0b0b0b);
+  --ink-2: #52514e;
+  --ink-muted: var(--tg-theme-hint-color, #898781);
+
+  --grid: #e1e0d9;
+  --grid: color-mix(in oklab, var(--ink-1) 10%, transparent);
+  --baseline: #c3c2b7;
+  --baseline: color-mix(in oklab, var(--ink-1) 24%, transparent);
+  --border: rgba(11, 11, 11, 0.1);
+  --track: color-mix(in oklab, var(--ink-1) 8%, transparent);
+
+  --series: #2a78d6;
+  --good: #0ca30c;
+  --accent: var(--tg-theme-button-color, #2a78d6);
+  --accent-ink: var(--tg-theme-button-text-color, #ffffff);
+
+  --radius: 14px;
+  --gutter: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --plane: var(--tg-theme-bg-color, #0d0d0d);
+    --surface: var(--tg-theme-secondary-bg-color, #1a1a19);
+    --ink-1: var(--tg-theme-text-color, #f0efec);
+    --ink-2: #c3c2b7;
+    --border: rgba(255, 255, 255, 0.1);
+    --series: #3987e5;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --plane: var(--tg-theme-bg-color, #0d0d0d);
+  --surface: var(--tg-theme-secondary-bg-color, #1a1a19);
+  --ink-1: var(--tg-theme-text-color, #f0efec);
+  --ink-2: #c3c2b7;
+  --border: rgba(255, 255, 255, 0.1);
+  --series: #3987e5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 12px var(--gutter) 40px;
+  background: var(--plane);
+  color: var(--ink-1);
+  font: 15px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 { font-size: 20px; margin: 4px 0 2px; }
+h2 { font-size: 15px; margin: 0 0 10px; letter-spacing: 0.01em; }
+p { margin: 0; }
+
+.muted { color: var(--ink-muted); }
+.sub { color: var(--ink-2); font-size: 13px; }
+.num { font-variant-numeric: tabular-nums; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+/* ---------------------------------------------------------- stat tiles */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+
+.tile-label { font-size: 12px; color: var(--ink-muted); }
+.tile-value { font-size: 20px; font-weight: 600; margin-top: 2px; }
+.tile-note { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.tile-note.ok { color: var(--good); }
+
+/* ------------------------------------------------------------- meters */
+
+.meter {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+  margin: 10px 0 6px;
+}
+
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--series);
+}
+
+.row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+
+/* The week at a glance: seven columns, so the eye compares days by position. */
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.weekday { text-align: center; font-size: 11px; color: var(--ink-muted); }
+
+.weekday b {
+  display: block;
+  margin-top: 1px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.weekday.miss b { color: var(--ink-muted); font-weight: 500; }
+.weekday.future b { color: var(--grid); }
+
+/* -------------------------------------------------------------- charts */
+
+.chart { position: relative; margin: 0 -2px; }
+.chart svg { display: block; overflow: visible; }
+
+.chart-grid { stroke: var(--grid); stroke-width: 1; }
+.chart-baseline { stroke: var(--baseline); stroke-width: 1; }
+.chart-reference { stroke: var(--ink-muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart-reference-label,
+.chart-tick { fill: var(--ink-muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.chart-tick { text-anchor: end; }
+.chart-value { fill: var(--ink-2); font-size: 10px; font-weight: 600; }
+.chart-bar { fill: var(--series); }
+.chart-zero { fill: var(--ink-muted); }
+.chart-hit { fill: transparent; cursor: pointer; }
+.chart-hit:hover ~ .chart-bar { opacity: 0.85; }
+.chart-hit:focus-visible { fill: color-mix(in oklab, var(--series) 12%, transparent); outline: none; }
+
+.chart-tip {
+  position: absolute;
+  top: -2px;
+  transform: translateX(-50%);
+  background: var(--ink-1);
+  color: var(--plane);
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+details { margin-top: 8px; }
+summary { font-size: 13px; color: var(--ink-muted); cursor: pointer; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  margin-top: 8px;
+}
+
+.data-table th,
+.data-table td { text-align: right; padding: 3px 6px; border-bottom: 1px solid var(--border); }
+.data-table th:first-child,
+.data-table td:first-child { text-align: left; }
+.data-table th { color: var(--ink-muted); font-weight: 500; }
+
+/* ------------------------------------------------------------ controls */
+
+.quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+button {
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-1);
+  cursor: pointer;
+  min-height: 38px;
+}
+
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+button.ghost { background: transparent; }
+button:disabled { opacity: 0.5; cursor: default; }
+button:active { transform: translateY(1px); }
+
+.field { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.field label { flex: 1; font-size: 14px; }
+
+input[type='number'],
+input[type='text'],
+input[type='time'] {
+  font: inherit;
+  font-size: 15px;
+  width: 92px;
+  padding: 7px 9px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--plane);
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Wide enough for a 12-hour clock ('9:00 PM') to render unclipped. */
+input[type='time'] { width: 124px; }
+
+/* ------------------------------------------------------------- library */
+
+.book {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.book:last-child { border-bottom: 0; }
+.book-title { font-weight: 600; }
+.book-meta { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+.book-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.book-actions button { font-size: 13px; padding: 5px 10px; min-height: 32px; }
+.stars { color: var(--ink-2); letter-spacing: 1px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+.chip {
+  font-size: 12px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--ink-2);
+}
+
+.quote { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.quote:last-child { border-bottom: 0; }
+.quote cite { display: block; font-size: 12px; color: var(--ink-muted); font-style: normal; margin-top: 3px; }
+
+.banner {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  font-size: 14px;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  background: var(--ink-1);
+  color: var(--plane);
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  z-index: 10;
+}
+
+[hidden] { display: none !important; }

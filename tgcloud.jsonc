@@ -1,0 +1,9 @@
+{
+  // The Mini App is plain HTML/CSS/JS — no build step, so the source folder is
+  // also the deploy folder. `spa` keeps deep links working if we ever add routes.
+  "static": {
+    "source": "miniapp",
+    "spa": true
+  },
+  "$schema": "./node_modules/@tgcloud/cli/schema/tgcloud.json"
+}

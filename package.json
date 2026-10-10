@@ -1,0 +1,18 @@
+{
+  "name": "reading-helper",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@tgcloud/cli": "^0.2.0",
+    "sdk": "file:./test/sdk-double"
+  },
+  "scripts": {
+    "deploy": "tgcloud push",
+    "status": "tgcloud status",
+    "migrate": "tgcloud migrate",
+    "run": "tgcloud run",
+    "tick": "tgcloud run lib/tick",
+    "test": "node --test --no-warnings test/*.test.js",
+    "check:pdfs": "node test/manual/check-real-pdfs.mjs"
+  }
+}
