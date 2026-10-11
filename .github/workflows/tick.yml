@@ -1,0 +1,43 @@
+# The bot's clock.
+#
+# Telegram Serverless runs code only when an update arrives: it has no cron, no
+# timers and no background jobs. But `tgcloud run <module>` executes a module on
+# Telegram's own infrastructure using the files from this checkout — so a plain
+# scheduled workflow is enough to give the bot a scheduler.
+#
+# Setup: add a repository secret TGCLOUD_TOKEN with the token from
+# BotFather → your bot → Serverless → CLI Access.
+#
+# Note: GitHub's cron is approximate (a run can be late by 10+ minutes), which
+# is why lib/tick.js accepts a grace window and is idempotent. GitHub also
+# disables scheduled workflows in repositories with no activity for 60 days.
+
+name: tick
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: tick
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run the scheduler on the platform
+        run: npx tgcloud run lib/tick
+        env:
+          TGCLOUD_TOKEN: ${{ secrets.TGCLOUD_TOKEN }}

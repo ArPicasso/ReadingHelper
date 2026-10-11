@@ -1,0 +1,13 @@
+{
+  "name": "sdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Test double for the Telegram Serverless platform SDK. Installed as a file: devDependency so that `import ... from 'sdk'` resolves in tests. Never deployed: tgcloud only uploads tgcloud/**.js.",
+  "exports": {
+    ".": "./index.js",
+    "./db": "./db.js",
+    "./api": "./api.js",
+    "./fetch": "./fetch.js"
+  }
+}
